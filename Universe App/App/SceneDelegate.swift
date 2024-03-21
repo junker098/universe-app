@@ -14,9 +14,15 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     func scene(_ scene: UIScene, willConnectTo session: UISceneSession, options connectionOptions: UIScene.ConnectionOptions) {
         guard let windowScene = (scene as? UIWindowScene) else { return }
         let window = UIWindow(windowScene: windowScene)
-        window.rootViewController = PhotoLibraryViewController()
+        window.rootViewController = injectViewController()
         window.makeKeyAndVisible()
         self.window = window
+    }
+    
+    func injectViewController() -> UIViewController {
+        let photoService = PHPhotoService()
+        let viewModel = PhotoLibraryViewModel(photoService: photoService)
+        return PhotoLibraryViewController(viewModel: viewModel)
     }
 }
 
