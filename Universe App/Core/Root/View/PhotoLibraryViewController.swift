@@ -99,25 +99,7 @@ class PhotoLibraryViewController: BaseViewController {
         setupBottomView()
         addTargets()
         viewModel.startLoading()
-        viewModel.photoPublisher
-             .sink { [weak self] image in
-                 guard let self = self else { return }
-                 DispatchQueue.main.async {
-                     self.setupImage(image)
-                     self.dismissActivity()
-                 }
-             }
-             .store(in: &viewModel.cancellables)
-        
-        viewModel.trashCount
-            .sink { [weak self] count in
-                DispatchQueue.main.async {
-                    guard let self = self else { return }
-                    self.countLabel.text = count
-                }
-            }
-            .store(in: &viewModel.cancellables)
-        
+        setupPublisher()
         DispatchQueue.main.async {
             self.showActivity()
         }
@@ -129,6 +111,23 @@ class PhotoLibraryViewController: BaseViewController {
         } else {
             mainImageView.image = UIImage(named: "blank_photo")
         }
+    }
+    
+    private func setupPublisher() {
+        viewModel.publisher.sink { [weak self]  event in
+            DispatchQueue.main.async {
+                guard let self = self else { return }
+                switch event {
+                case .errorMessage(let text):
+                    self.showAllertMessage(text: text)
+                case .photoPublisher(let uIImage):
+                    self.setupImage(uIImage)
+                    self.dismissActivity()
+                case .trashCount(let count):
+                    self.countLabel.text = count
+                }
+            }
+        } .store(in: &viewModel.cancellables)
     }
     
     //MARK: - 'Setup costraints'
@@ -218,16 +217,19 @@ extension PhotoLibraryViewController {
                     }
                     switch result {
                     case .success(let success):
-                        print("success")
-                    case .failure(let failure):
-                      
-                        print("failure")
+                        DispatchQueue.main.sync {
+                            self.showAllertMessage(text: success)
+                        }
+                    case .failure(_):
+                        DispatchQueue.main.sync {
+                            self.showAllertMessage(text: "You did not allow these photos to be deleted")
+                        }
                     }
                 }
-                
             } else {
-                print("Cancel")
-                
+                DispatchQueue.main.sync {
+                    self.dismissActivity()
+                }
             }
         }
     }
