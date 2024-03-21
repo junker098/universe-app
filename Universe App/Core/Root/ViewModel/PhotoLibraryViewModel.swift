@@ -10,21 +10,40 @@ import Combine
 
 protocol PhotoLibraryViewModelProtocol {
     var photoService: PHPhotoServiceProtocol { get }
+    var coreDataService: CoreDataServiceProtocol { get }
 }
 
 class PhotoLibraryViewModel: PhotoLibraryViewModelProtocol {
     
-    var photoService: PHPhotoServiceProtocol
+    enum PublisherEvent {
+        case errorMessage(String)
+        case photoPublisher(UIImage?)
+        case trashCount(String?)
+    }
     
-    let photoPublisher = PassthroughSubject<UIImage?, Never>()
-    let trashCount = PassthroughSubject<String?, Never>()
+    var photoService: PHPhotoServiceProtocol
+    var coreDataService: CoreDataServiceProtocol
+    
+    var publisher = PassthroughSubject<PublisherEvent, Never>()
     var cancellables = Set<AnyCancellable>()
     
     private var photosArray: [PhotoModel] = []
     private var currentPhoto: PhotoModel?
     
-    init(photoService: PHPhotoServiceProtocol) {
+    init(photoService: PHPhotoServiceProtocol, coreDataService: CoreDataServiceProtocol) {
         self.photoService = photoService
+        self.coreDataService = coreDataService
+        addSubscriber()
+    }
+    
+    func addSubscriber() {
+        NotificationCenter.default
+            .publisher(for: UIApplication.didEnterBackgroundNotification)
+            .sink { [weak self] _ in
+                guard let self = self else { return }
+                self.coreDataService.saveNewModels(self.photosArray)
+            }
+            .store(in: &cancellables)
     }
     
     func startLoading() {
@@ -33,41 +52,57 @@ class PhotoLibraryViewModel: PhotoLibraryViewModelProtocol {
             switch status {
             case .authorized:
                 strongSelf.photoService.fetchAllPhotos { photoArray in
-                    strongSelf.photosArray = photoArray
-                    strongSelf.setupCurrentPhoto(photo: photoArray)
+                    strongSelf.checkSavedData(new: photoArray)
                 }
             case .denied, .restricted, .limited:
-                print("Photo access permission denied")
+                strongSelf.sendAlert(text: "Photo access permission denied")
             case .notDetermined:
-                print("Photo access permission not determined")
+                strongSelf.sendAlert(text: "Photo access permission not determined")
             @unknown default:
                 break
             }
         }
     }
     
-    private func setupCurrentPhoto(photo models: [PhotoModel]) {
-        if let currentPhoto = models.first {
+    func checkSavedData(new model: [PhotoModel]) {
+        coreDataService.fetchPhotoModels { data in
+            self.photosArray = model
+            if let oldData = data {
+                oldData.forEach { coreDataModel in
+                    if coreDataModel.isDeleting {
+                        if let index = model.firstIndex(where: { $0.localIdentifiers == coreDataModel.localIdentifiers }) {
+                            self.photosArray[index].isDeleting = coreDataModel.isDeleting
+                        }
+                    }
+                }
+            }
+            self.setupCurrentPhoto(self.photosArray)
+            self.updateTrashCount()
+        }
+    }
+    
+    private func setupCurrentPhoto(_ models: [PhotoModel]) {
+        if let currentPhoto = models.first(where: { !$0.isDeleting }) {
             self.currentPhoto = currentPhoto
             self.showPhoto(currentPhoto)
         }
     }
     
-    private func showPhoto(_ info: PhotoModel?) {
-        if let id = info?.localIdentifiers {
+    private func showPhoto(_ model: PhotoModel?) {
+        if let id = model?.localIdentifiers {
             Task {
                 do {
                     if let image = try await photoService.fetchImage(byLocalIdentifier: id) {
-                        photoPublisher.send(image)
+                        publisher.send(.photoPublisher(image))
                     } else {
                         showBlankPhoto()
                     }
                 } catch {
-                    print("Error fetching image: \(error)")
+                    sendAlert(text: "Error fetching image: \(error)")
                 }
             }
         } else {
-            print("DEEBUG - showPhoto")
+            showBlankPhoto()
         }
     }
     
@@ -80,7 +115,7 @@ class PhotoLibraryViewModel: PhotoLibraryViewModelProtocol {
     }
     
     private func updateTrashCount() {
-        trashCount.send(String(deletingCount()))
+        publisher.send(.trashCount(String(deletingCount())))
     }
     
     func deletingCount() -> Int {
@@ -91,7 +126,12 @@ class PhotoLibraryViewModel: PhotoLibraryViewModelProtocol {
         guard let curPhoto = currentPhoto, let currentPhotoIndex = photosArray.firstIndex(of: curPhoto) else {
             return
         }
-        let nextIndex = photosArray.index(after: currentPhotoIndex)
+        var nextIndex = currentPhotoIndex
+        
+        repeat {
+            nextIndex = photosArray.index(after: nextIndex)
+        } while nextIndex < photosArray.count && photosArray[nextIndex].isDeleting
+        
         if nextIndex < photosArray.count {
             let nextPhoto = photosArray[nextIndex]
             showPhoto(nextPhoto)
@@ -102,11 +142,24 @@ class PhotoLibraryViewModel: PhotoLibraryViewModelProtocol {
     }
     
     func emptyTrash(result: @escaping (Result<String, Error>) -> Void) {
-        photoService.deleteSelectedPhotos(photos: photosArray) { result($0) }
+        photoService.deleteSelectedPhotos(photos: photosArray) { [weak self] responseResult in
+            guard let self = self else { return }
+            switch responseResult {
+            case .success(_ ):
+                self.photosArray.removeAll { $0.isDeleting }
+                self.updateTrashCount()
+            default: break
+            }
+            result(responseResult)
+        }
     }
     
     private func showBlankPhoto() {
         currentPhoto = nil
-        photoPublisher.send(nil)
+        publisher.send(.photoPublisher(nil))
+    }
+    
+    private func sendAlert(text: String?) {
+        publisher.send(.errorMessage(text ?? "Error"))
     }
 }
