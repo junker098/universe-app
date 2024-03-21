@@ -54,15 +54,16 @@ class PHPhotoService: PHPhotoServiceProtocol {
         options.isNetworkAccessAllowed = true
         options.isSynchronous = true
         return try await withCheckedThrowingContinuation { [weak self] continuation in
-            self?.imageCachingManager.requestImage(
+            guard let self = self else { return }
+            self.imageCachingManager.requestImage(
                 for: asset,
                 targetSize: PHImageManagerMaximumSize,
                 contentMode: .default,
                 options: options,
                 resultHandler: { image, info in
                     if let error = info?[PHImageErrorKey] as? Error {
-                        print(error)
                         continuation.resume(throwing: error)
+                        DebugLogger.shared.logEvent(type: .error, object: error)
                         return
                     }
                     continuation.resume(returning: image)
