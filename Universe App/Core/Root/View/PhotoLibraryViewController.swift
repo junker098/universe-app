@@ -212,22 +212,22 @@ extension PhotoLibraryViewController {
             if result {
                 self.showActivity()
                 self.viewModel.emptyTrash { result in
-                    DispatchQueue.main.sync {
+                    DispatchQueue.main.async {
                         self.dismissActivity()
                     }
                     switch result {
                     case .success(let success):
-                        DispatchQueue.main.sync {
+                        DispatchQueue.main.async {
                             self.showAllertMessage(text: success)
                         }
                     case .failure(_):
-                        DispatchQueue.main.sync {
+                        DispatchQueue.main.async {
                             self.showAllertMessage(text: "You did not allow these photos to be deleted")
                         }
                     }
                 }
             } else {
-                DispatchQueue.main.sync {
+                DispatchQueue.main.async {
                     self.dismissActivity()
                 }
             }
