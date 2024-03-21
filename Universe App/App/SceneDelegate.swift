@@ -21,7 +21,10 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     
     func injectViewController() -> UIViewController {
         let photoService = PHPhotoService()
-        let viewModel = PhotoLibraryViewModel(photoService: photoService)
+        let coreDataService = CoreDataService()
+        let viewModel = PhotoLibraryViewModel(photoService: photoService,
+                                              coreDataService: coreDataService
+        )
         return PhotoLibraryViewController(viewModel: viewModel)
     }
 }
