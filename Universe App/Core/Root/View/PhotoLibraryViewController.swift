@@ -8,7 +8,18 @@
 import UIKit
 import SnapKit
 
-class PhotoLibraryViewController: UIViewController {
+class PhotoLibraryViewController: BaseViewController {
+    
+    private var viewModel: PhotoLibraryViewModel!
+    
+    init(viewModel: PhotoLibraryViewModel) {
+        self.viewModel = viewModel
+        super.init(nibName: nil, bundle: nil)
+    }
+    
+    required init?(coder: NSCoder) {
+        fatalError("init(coder:) has not been implemented")
+    }
     
     //MARK: - 'Private constants'
     private enum UIConstants {
@@ -52,7 +63,7 @@ class PhotoLibraryViewController: UIViewController {
         let label = UILabel()
         label.font = UIFont.systemFont(ofSize: 26, weight: .bold)
         label.textColor = .white
-        label.text = "1110"
+        label.text = "0"
         return label
     }()
     
@@ -87,6 +98,37 @@ class PhotoLibraryViewController: UIViewController {
         setupTopView()
         setupBottomView()
         addTargets()
+        viewModel.startLoading()
+        viewModel.photoPublisher
+             .sink { [weak self] image in
+                 guard let self = self else { return }
+                 DispatchQueue.main.async {
+                     self.setupImage(image)
+                     self.dismissActivity()
+                 }
+             }
+             .store(in: &viewModel.cancellables)
+        
+        viewModel.trashCount
+            .sink { [weak self] count in
+                DispatchQueue.main.async {
+                    guard let self = self else { return }
+                    self.countLabel.text = count
+                }
+            }
+            .store(in: &viewModel.cancellables)
+        
+        DispatchQueue.main.async {
+            self.showActivity()
+        }
+    }
+    
+    private func setupImage(_ image : UIImage?) {
+        if let newImage = image {
+            mainImageView.image = newImage
+        } else {
+            mainImageView.image = UIImage(named: "blank_photo")
+        }
     }
     
     //MARK: - 'Setup costraints'
@@ -119,7 +161,7 @@ class PhotoLibraryViewController: UIViewController {
     private func setupBottomView() {
         let mainHStack = UIStackView()
         mainHStack.axis = .horizontal
-        mainHStack.spacing = 16
+        mainHStack.spacing = 12
         mainHStack.addArrangedSubview(countLabel)
         mainHStack.addArrangedSubview(trashLabel)
         mainHStack.addArrangedSubview(emptyTrashButton)
@@ -157,17 +199,37 @@ extension PhotoLibraryViewController {
     
     @objc
     func binTapped() {
-        print("binTapped")
+        viewModel.deleteTapped()
     }
     
     @objc
     func doneTapped() {
-        print("doneTapped")
+       viewModel.showNext()
     }
     
     @objc
     func clearTrashTapped() {
-        print("clearTrashTapped")
+        self.showAlert(title: "Confirm deleting", message: "Please confirm deleting \(viewModel.deletingCount()) elements") { result in
+            if result {
+                self.showActivity()
+                self.viewModel.emptyTrash { result in
+                    DispatchQueue.main.sync {
+                        self.dismissActivity()
+                    }
+                    switch result {
+                    case .success(let success):
+                        print("success")
+                    case .failure(let failure):
+                      
+                        print("failure")
+                    }
+                }
+                
+            } else {
+                print("Cancel")
+                
+            }
+        }
     }
 }
 
