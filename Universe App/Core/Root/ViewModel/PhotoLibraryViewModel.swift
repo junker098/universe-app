@@ -48,16 +48,16 @@ class PhotoLibraryViewModel: PhotoLibraryViewModelProtocol {
     
     func startLoading() {
         photoService.requestAutorization { [weak self] status in
-            guard let strongSelf = self else { return }
+            guard let self = self else { return }
             switch status {
             case .authorized:
-                strongSelf.photoService.fetchAllPhotos { photoArray in
-                    strongSelf.checkSavedData(new: photoArray)
+                self.photoService.fetchAllPhotos { photoArray in
+                    self.checkSavedData(new: photoArray)
                 }
             case .denied, .restricted, .limited:
-                strongSelf.sendAlert(text: "Photo access permission denied")
+                self.sendAlert(text: "Photo access permission denied")
             case .notDetermined:
-                strongSelf.sendAlert(text: "Photo access permission not determined")
+                self.sendAlert(text: "Photo access permission not determined")
             @unknown default:
                 break
             }

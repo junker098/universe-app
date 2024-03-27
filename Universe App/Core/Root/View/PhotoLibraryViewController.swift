@@ -8,7 +8,7 @@
 import UIKit
 import SnapKit
 
-class PhotoLibraryViewController: BaseViewController {
+final class PhotoLibraryViewController: BaseViewController {
     
     private var viewModel: PhotoLibraryViewModel!
     
@@ -188,9 +188,9 @@ class PhotoLibraryViewController: BaseViewController {
 
 //MARK: - 'Methods'
 
-extension PhotoLibraryViewController {
+private extension PhotoLibraryViewController {
     
-    private func addTargets() {
+    func addTargets() {
         binButton.addTarget(self, action: #selector(binTapped), for: .touchUpInside)
         doneButton.addTarget(self, action: #selector(doneTapped), for: .touchUpInside)
         emptyTrashButton.addTarget(self, action: #selector(clearTrashTapped), for: .touchUpInside)
