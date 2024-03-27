@@ -40,7 +40,7 @@ class PhotoLibraryViewModel: PhotoLibraryViewModelProtocol {
         NotificationCenter.default
             .publisher(for: UIApplication.didEnterBackgroundNotification)
             .sink { [weak self] _ in
-                guard let self = self else { return }
+                guard let self else { return }
                 self.coreDataService.saveNewModels(self.photosArray)
             }
             .store(in: &cancellables)
@@ -48,7 +48,7 @@ class PhotoLibraryViewModel: PhotoLibraryViewModelProtocol {
     
     func startLoading() {
         photoService.requestAutorization { [weak self] status in
-            guard let self = self else { return }
+            guard let self else { return }
             switch status {
             case .authorized:
                 self.photoService.fetchAllPhotos { photoArray in
@@ -143,7 +143,7 @@ class PhotoLibraryViewModel: PhotoLibraryViewModelProtocol {
     
     func emptyTrash(result: @escaping (Result<String, Error>) -> Void) {
         photoService.deleteSelectedPhotos(photos: photosArray) { [weak self] responseResult in
-            guard let self = self else { return }
+            guard let self else { return }
             switch responseResult {
             case .success(_ ):
                 self.photosArray.removeAll { $0.isDeleting }

@@ -116,7 +116,7 @@ final class PhotoLibraryViewController: BaseViewController {
     private func setupPublisher() {
         viewModel.publisher.sink { [weak self]  event in
             DispatchQueue.main.async {
-                guard let self = self else { return }
+                guard let self else { return }
                 switch event {
                 case .errorMessage(let text):
                     self.showAllertMessage(text: text)
@@ -208,8 +208,8 @@ private extension PhotoLibraryViewController {
     
     @objc
     func clearTrashTapped() {
-        self.showAlert(title: "Confirm deleting", message: "Please confirm deleting \(viewModel.deletingCount()) elements") { result in
-            if result {
+        self.showAlert(title: "Confirm deleting", message: "Please confirm deleting \(viewModel.deletingCount()) elements") { [weak self] result in
+            if let self, result {
                 self.showActivity()
                 self.viewModel.emptyTrash { result in
                     DispatchQueue.main.async {
@@ -228,7 +228,7 @@ private extension PhotoLibraryViewController {
                 }
             } else {
                 DispatchQueue.main.async {
-                    self.dismissActivity()
+                    self?.dismissActivity()
                 }
             }
         }
