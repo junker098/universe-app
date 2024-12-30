@@ -24,8 +24,8 @@ class PhotoLibraryViewModel: PhotoLibraryViewModelProtocol {
     var photoService: PHPhotoServiceProtocol
     var coreDataService: CoreDataServiceProtocol
     
-    var publisher = PassthroughSubject<PublisherEvent, Never>()
-    var cancellables = Set<AnyCancellable>()
+    var photoPublisher = PassthroughSubject<PublisherEvent, Never>()
+    private var cancellables = Set<AnyCancellable>()
     
     private var photosArray: [PhotoModel] = []
     private var currentPhoto: PhotoModel?
@@ -93,7 +93,7 @@ class PhotoLibraryViewModel: PhotoLibraryViewModelProtocol {
             Task {
                 do {
                     if let image = try await photoService.fetchImage(byLocalIdentifier: id) {
-                        publisher.send(.photoPublisher(image))
+                        photoPublisher.send(.photoPublisher(image))
                     } else {
                         showBlankPhoto()
                     }
@@ -115,7 +115,7 @@ class PhotoLibraryViewModel: PhotoLibraryViewModelProtocol {
     }
     
     private func updateTrashCount() {
-        publisher.send(.trashCount(String(deletingCount())))
+        photoPublisher.send(.trashCount(String(deletingCount())))
     }
     
     func deletingCount() -> Int {
@@ -156,10 +156,10 @@ class PhotoLibraryViewModel: PhotoLibraryViewModelProtocol {
     
     private func showBlankPhoto() {
         currentPhoto = nil
-        publisher.send(.photoPublisher(nil))
+        photoPublisher.send(.photoPublisher(nil))
     }
     
     private func sendAlert(text: String?) {
-        publisher.send(.errorMessage(text ?? "Error"))
+        photoPublisher.send(.errorMessage(text ?? "Error"))
     }
 }

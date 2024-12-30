@@ -22,6 +22,7 @@
 		DE5F92132BAC39C300F79B0B /* PhotoModelData+CoreDataProperties.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE5F92112BAC39C300F79B0B /* PhotoModelData+CoreDataProperties.swift */; };
 		DE5F92182BAC417E00F79B0B /* CoreDataService.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE5F92172BAC417E00F79B0B /* CoreDataService.swift */; };
 		DE5F921B2BACA1A000F79B0B /* DebugLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE5F921A2BACA1A000F79B0B /* DebugLogger.swift */; };
+		DE6A3DF22D22F66000079CEC /* ImagesNames.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE6A3DF12D22F66000079CEC /* ImagesNames.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -41,6 +42,7 @@
 		DE5F92112BAC39C300F79B0B /* PhotoModelData+CoreDataProperties.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "PhotoModelData+CoreDataProperties.swift"; sourceTree = "<group>"; };
 		DE5F92172BAC417E00F79B0B /* CoreDataService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CoreDataService.swift; sourceTree = "<group>"; };
 		DE5F921A2BACA1A000F79B0B /* DebugLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DebugLogger.swift; sourceTree = "<group>"; };
+		DE6A3DF12D22F66000079CEC /* ImagesNames.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ImagesNames.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -55,6 +57,13 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		DE26781F2BEAB68E00A438E2 /* Components */ = {
+			isa = PBXGroup;
+			children = (
+			);
+			path = Components;
+			sourceTree = "<group>";
+		};
 		DE5F91DA2BA8896600F79B0B = {
 			isa = PBXGroup;
 			children = (
@@ -77,6 +86,7 @@
 				DE5F91FB2BA897EB00F79B0B /* App */,
 				DE5F91FC2BA897F900F79B0B /* Core */,
 				DE5F92092BAB9B9C00F79B0B /* Services */,
+				DE6A3DEE2D22F62100079CEC /* Resources */,
 				DE5F91EF2BA8896800F79B0B /* Assets.xcassets */,
 				DE5F92152BAC414900F79B0B /* CoreData */,
 				DE5F91F12BA8896800F79B0B /* LaunchScreen.storyboard */,
@@ -110,6 +120,7 @@
 			children = (
 				DE5F91FA2BA896EA00F79B0B /* Root */,
 				DE5F92042BAAFED200F79B0B /* BaseViewController.swift */,
+				DE26781F2BEAB68E00A438E2 /* Components */,
 			);
 			path = Core;
 			sourceTree = "<group>";
@@ -187,6 +198,22 @@
 				DE5F921A2BACA1A000F79B0B /* DebugLogger.swift */,
 			);
 			path = Logger;
+			sourceTree = "<group>";
+		};
+		DE6A3DEE2D22F62100079CEC /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				DE6A3DF02D22F64200079CEC /* Images */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		DE6A3DF02D22F64200079CEC /* Images */ = {
+			isa = PBXGroup;
+			children = (
+				DE6A3DF12D22F66000079CEC /* ImagesNames.swift */,
+			);
+			path = Images;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -277,6 +304,7 @@
 				DE5F92182BAC417E00F79B0B /* CoreDataService.swift in Sources */,
 				DE5F91E92BA8896600F79B0B /* SceneDelegate.swift in Sources */,
 				DE5F920C2BAB9BE800F79B0B /* PhotoService.swift in Sources */,
+				DE6A3DF22D22F66000079CEC /* ImagesNames.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

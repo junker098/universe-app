@@ -7,10 +7,12 @@
 
 import UIKit
 import SnapKit
+import Combine
 
 final class PhotoLibraryViewController: BaseViewController {
     
     private var viewModel: PhotoLibraryViewModel!
+    private var cancellables = Set<AnyCancellable>()
     
     init(viewModel: PhotoLibraryViewModel) {
         self.viewModel = viewModel
@@ -31,57 +33,52 @@ final class PhotoLibraryViewController: BaseViewController {
     //MARK: - 'Private properties'
     
     private let mainImageView: UIImageView = {
-        let image = UIImageView(image: UIImage(named: "testImage"))
-        image.layer.cornerRadius = UIConstants.cornerRadius
-        image.clipsToBounds = true
-        image.contentMode = .scaleAspectFill
-        return image
-    }()
+        $0.image = UIImage(named: ImagesNames.testImage.rawValue)
+        $0.layer.cornerRadius = UIConstants.cornerRadius
+        $0.clipsToBounds = true
+        $0.contentMode = .scaleAspectFill
+        return $0
+    }(UIImageView())
     
     private let binButton = {
-        let button = UIButton()
-        button.setImage(UIImage(named: "bin"), for: .normal)
-        button.backgroundColor = UIColor.bin
-        return button
-    }()
+        $0.setImage(UIImage(named: ImagesNames.bin.rawValue), for: .normal)
+        $0.backgroundColor = UIColor.bin
+        return $0
+    }(UIButton())
     
     private let doneButton = {
-        let button = UIButton()
-        button.setImage(UIImage(named: "done"), for: .normal)
-        button.backgroundColor = UIColor.done
-        return button
-    }()
+        $0.setImage(UIImage(named: ImagesNames.done.rawValue), for: .normal)
+        $0.backgroundColor = UIColor.done
+        return $0
+    }(UIButton())
     
     private let emptyBottomView = {
-        let view = UIView()
-        view.backgroundColor = UIColor.bottomTrash
-        view.layer.cornerRadius = UIConstants.cornerRadius
-        return view
-    }()
+        $0.backgroundColor = UIColor.bottomTrash
+        $0.layer.cornerRadius = UIConstants.cornerRadius
+        return $0
+    }(UIView())
     
     private let countLabel = {
-        let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 26, weight: .bold)
-        label.textColor = .white
-        label.text = "0"
-        return label
-    }()
+        $0.font = UIFont.systemFont(ofSize: 26, weight: .bold)
+        $0.textColor = .white
+        $0.text = "0"
+        return $0
+    }(UILabel())
     
     private let trashLabel = {
-        let label = UILabel()
-        label.font = UIFont.systemFont(ofSize: 14, weight: .medium)
-        label.textColor = .white
-        label.text = "images in the trash"
-        label.numberOfLines = 2
-        return label
-    }()
+        $0.font = UIFont.systemFont(ofSize: 14, weight: .medium)
+        $0.textColor = .white
+        $0.text = "images in the trash"
+        $0.numberOfLines = 2
+        return $0
+    }(UILabel())
     
     private let emptyTrashButton = {
         var configuration = UIButton.Configuration.filled()
         var container = AttributeContainer()
         container.font = UIFont.systemFont(ofSize: 17, weight: .medium)
         configuration.attributedTitle = AttributedString("Empty trash", attributes: container)
-        configuration.image = UIImage(named: "bin")?.withRenderingMode(.alwaysTemplate)
+        configuration.image = UIImage(named: ImagesNames.bin.rawValue)?.withRenderingMode(.alwaysTemplate)
         configuration.imagePlacement = .leading
         configuration.imagePadding = 5
         configuration.baseBackgroundColor = UIColor.emptyTrash
@@ -100,21 +97,19 @@ final class PhotoLibraryViewController: BaseViewController {
         addTargets()
         viewModel.startLoading()
         setupPublisher()
-        DispatchQueue.main.async {
-            self.showActivity()
-        }
+        showActivity()
     }
     
     private func setupImage(_ image : UIImage?) {
         if let newImage = image {
             mainImageView.image = newImage
         } else {
-            mainImageView.image = UIImage(named: "blank_photo")
+            mainImageView.image = UIImage(named: ImagesNames.blank_photo.rawValue)
         }
     }
     
     private func setupPublisher() {
-        viewModel.publisher.sink { [weak self]  event in
+        viewModel.photoPublisher.sink { [weak self]  event in
             DispatchQueue.main.async {
                 guard let self else { return }
                 switch event {
@@ -127,7 +122,7 @@ final class PhotoLibraryViewController: BaseViewController {
                     self.countLabel.text = count
                 }
             }
-        } .store(in: &viewModel.cancellables)
+        } .store(in: &cancellables)
     }
     
     //MARK: - 'Setup costraints'
@@ -209,25 +204,19 @@ private extension PhotoLibraryViewController {
     @objc
     func clearTrashTapped() {
         self.showAlert(title: "Confirm deleting", message: "Please confirm deleting \(viewModel.deletingCount()) elements") { [weak self] result in
-            if let self, result {
-                self.showActivity()
-                self.viewModel.emptyTrash { result in
-                    DispatchQueue.main.async {
+            DispatchQueue.main.async {
+                if let self, result {
+                    self.showActivity()
+                    self.viewModel.emptyTrash { result in
                         self.dismissActivity()
-                    }
-                    switch result {
-                    case .success(let success):
-                        DispatchQueue.main.async {
+                        switch result {
+                        case .success(let success):
                             self.showAllertMessage(text: success)
-                        }
-                    case .failure(_):
-                        DispatchQueue.main.async {
+                        case .failure(_):
                             self.showAllertMessage(text: "You did not allow these photos to be deleted")
                         }
                     }
-                }
-            } else {
-                DispatchQueue.main.async {
+                } else {
                     self?.dismissActivity()
                 }
             }
